@@ -30,7 +30,7 @@ After modifying code:
 4. Create or update exactly one logical change record in `docs/changes/` for the completed task.
 5. Update `docs/changes/README.md`.
 6. Treat the implementation as incomplete until the documentation step is finished.
-
+7. After every output, you should explain briefly the user what was done and why.
 ## Convention routing
 
 Read only what applies:
