@@ -1,6 +1,6 @@
 # Database Conventions
 
-- Every table must have a primary key.
+- Every table must have a primary key (UUID).
 - Use explicit foreign keys when relationships require them.
 - Use database constraints to protect important invariants where appropriate.
 - Do not rely only on application validation for data integrity.
