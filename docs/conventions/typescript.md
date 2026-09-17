@@ -61,6 +61,54 @@ export type Status = (typeof STATUS)[keyof typeof STATUS];
 - Avoid global state when local or server state is sufficient.
 - Use semantic HTML.
 
+## Tanstack / React Query
+
+- Query keys are arrays, ordered from general to specific, and include every variable the query depends on (filters, ids, pagination). Use a query key factory per entity instead of hand-writing keys inline.
+
+```ts
+export const userKeys = {
+  all: ["users"] as const,
+  lists: () => [...userKeys.all, "list"] as const,
+  list: (filters: UserFilters) => [...userKeys.lists(), filters] as const,
+  details: () => [...userKeys.all, "detail"] as const,
+  detail: (id: string) => [...userKeys.details(), id] as const,
+};
+```
+
+- Wrap each query in a named hook (`useUser`, `useUserList`) rather than calling `useQuery` directly in components. Keep the query function in a colocated `api`/`queries` module.
+
+```ts
+export function useUser(id: string) {
+  return useQuery({
+    queryKey: userKeys.detail(id),
+    queryFn: () => fetchUser(id),
+    enabled: Boolean(id),
+  });
+}
+```
+
+- Set `staleTime` deliberately based on data volatility instead of relying on the default of `0` for data that does not need to be refetched constantly.
+- Use `enabled` for dependent queries instead of conditionally calling hooks.
+- Handle `isPending`/`isLoading`, `isError`, and success states explicitly in the UI; do not assume data is defined once `isLoading` is `false`.
+- After mutations, invalidate the related query keys (prefer the narrowest key that covers the affected data) rather than refetching broadly or manually patching the cache.
+
+```ts
+export function useUpdateUser(id: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: UpdateUserInput) => updateUser(id, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: userKeys.detail(id) });
+    },
+  });
+}
+```
+
+- Use `isPending` from `useMutation` for submit/button loading states, and surface mutation errors at the UI boundary that triggered the mutation.
+- For optimistic updates, set the new value in `onMutate`, capture the previous value for rollback, and roll back in `onError`.
+
+
 ## Runtime validation
 
 Use Zod or an established project equivalent at untrusted runtime boundaries when schema validation is needed.
